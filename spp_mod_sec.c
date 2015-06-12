@@ -99,7 +99,7 @@ void SetupModSec(void)
     _dpd.registerPreproc("mod_sec", ModSecInit, ModSecReload,
             ModSecReloadVerify, ModSecReloadSwap, ModSecReloadSwapFree);
 #endif
-    _dpd.logMsg("How can i integrate this preprocessor to read ModSecurity CRS!!\n");
+    _dpd.logMsg("ModSecurity Rules Loaded!\n");
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: ModSec is setup\n"););
 }
