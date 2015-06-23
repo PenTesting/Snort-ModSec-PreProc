@@ -69,13 +69,14 @@ PreprocStats examplePerfStats;
 
 } ModSecConfig;
 
-
+*/
 
 const int MAJOR_VERSION = 1;
 const int MINOR_VERSION = 1;
 const int BUILD_VERSION = 1;
 const char *PREPROC_NAME = "SF_MOD_SEC";
-*/
+
+#define SetupModSec DYNAMIC_PREPROC_SETUP
 
 tSfPolicyUserContextId ex_config = NULL;
 ModSecConfig *ex_eval_config = NULL;
@@ -99,7 +100,7 @@ void SetupModSec(void)
     _dpd.registerPreproc("mod_sec", ModSecInit, ModSecReload,
             ModSecReloadVerify, ModSecReloadSwap, ModSecReloadSwapFree);
 #endif
-    _dpd.logMsg("ModSecurity Rules Loaded!\n");
+    _dpd.logMsg("ModSecurity Preprocessor Initialized!\n");
 
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: ModSec is setup\n"););
 }
