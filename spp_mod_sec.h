@@ -31,11 +31,6 @@
 #ifndef SPP_MOD_SEC_H
 #define SPP_MOD_SEC_H
 
-//#define MAJOR_VERSION   2
-//#define MINOR_VERSION   0
-//#define BUILD_VERSION   1
-//#define PREPROC_NAME    SF_MOD_SEC
-
 #define MAX_PORTS 65536
 
 /*
@@ -43,7 +38,6 @@
  */
 #define ModSec_Port	80
 
-//#define ModSecSetup	DYNAMIC_PREPROC_SETUP
 extern void SetupModSec();
 
 typedef struct _ModSecConfig
