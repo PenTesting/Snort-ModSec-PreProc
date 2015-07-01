@@ -36,13 +36,20 @@
 /*
  * Default ModSecurity Port
  */
-#define ModSec_Port	80
+#define MODSEC_PORT 80
 
 extern void SetupModSec();
 
-typedef struct _ModSecConfig
+typedef struct _modsecPortlistNode
 {
- 	u_int16_t portToCheck;
+    u_int16_t server_port;
+} ModSecPortNode;
+
+typedef struct _modsecConfig
+{
+    char ports[MAX_PORTS/8];
 } ModSecConfig;
+
+#define MODSEC_SERVERPORTS_KEYWORD 		"server_ports"
 
 #endif /* SPP_MOD_SEC_H */
