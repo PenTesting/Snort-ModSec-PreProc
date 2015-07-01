@@ -51,8 +51,11 @@
 #include "sfPolicyUserData.h"
 
 #include "profiler.h"
+#ifdef PERF_PROFILING
+PreprocStats modsecPerfStats;
+#endif
 
-#define GENERATOR_SPP_MODSEC 256
+#define GENERATOR_SPP_MODSEC 129
 #define SRC_PORT_MATCH  1
 #define SRC_PORT_MATCH_STR "spp_mod_sec_preprocessor: src port match"
 #define DST_PORT_MATCH  2
@@ -64,6 +67,10 @@ const int BUILD_VERSION = 1;
 const char *PREPROC_NAME = "SF_MODSEC";
 
 #define SetupModSec DYNAMIC_PREPROC_SETUP
+
+#ifdef TARGET_BASED
+int16_t modsec_app_id = SFTARGET_UNKNOWN_PROTOCOL;
+#endif
 
 /* Arguments are: gid, sid, rev, classification, priority, message, rule_info */
 #define ALERT(x,y) { _dpd.alertAdd(GENERATOR_SPP_MODSEC, x, 1, 0, 3, y, 0 ); }
@@ -89,6 +96,7 @@ static void enablePortStreamServices(struct _SnortConfig *, ModSecConfig *, tSfP
 #ifdef TARGET_BASED
 static void _addServicesToStreamFilter(struct _SnortConfig *, tSfPolicyId);
 #endif
+static void ModSecFreeConfig(tSfPolicyUserContextId config);
 static int ModSecCheckConfig(struct _SnortConfig *);
 static void ModSecCleanExit(int, void *);
 
@@ -126,8 +134,8 @@ void SetupModSec(void)
  */
 static void ModSecInit(struct _SnortConfig *sc, char *argp)
 {
-    ModSecConfig *config;
     tSfPolicyId policy_id = _dpd.getParserPolicy(sc);
+    ModSecConfig *pPolicyConfig = NULL;
 
     _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
 
@@ -181,7 +189,7 @@ static void ModSecInit(struct _SnortConfig *sc, char *argp)
 
     ParseModSecArgs(pPolicyConfig, (u_char *)argp);
 
-    _dpd.addPreproc(sc, ModSecProcess, PRIORITY_APPLICATION, PP_MODSEC, PROTO_BIT__TCP ! PROTO_BIT__UDP);
+    _dpd.addPreproc(sc, ModSecProcess, PRIORITY_APPLICATION, PP_MODSEC, PROTO_BIT__TCP | PROTO_BIT__UDP);
 
     enablePortStreamServices(sc, pPolicyConfig, policy_id);
 
@@ -203,7 +211,7 @@ static ModSecConfig * ModSecParse(char *argp)
 {
     char *arg = NULL;
     char *argEnd = NULL;
-    int ports;
+    int port;
     
     ModSecConfig *config = (ModSecConfig *)calloc(1, sizeof(ModSecConfig));
 
@@ -255,8 +263,8 @@ static ModSecConfig * ModSecParse(char *argp)
 	      }
 	      else
 	      {
-		ports = atoi(arg);
-		if(ports < 0 || ports > MAX_PORTS)
+		port = atoi(arg);
+		if(port < 0 || port > MAX_PORTS)
 		{
 		  DynamicPreprocessorFatalMessage("Port value illegitimate: %s\n", arg);
 		}
@@ -349,7 +357,7 @@ void ModSecProcess(void *pkt, void *context)
     /*     return; */
     /* } */
 
-    if (p->src_port == config->portToCheck)
+    if (p->src_port == ports)
     {
 
         if(length > 0) {
@@ -407,7 +415,7 @@ void ModSecProcess(void *pkt, void *context)
         return;
     }
 
-    if(p->dst_port = config->portToCheck)
+    if(p->dst_port = ports)
     {
         _dpd.alertAdd(GENERATOR_EXAMPLE, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0);
 
@@ -437,9 +445,33 @@ ParseModSecArgs(ModSecConfig *config, u_char* argp)
 
 
 }
-void ParseModSecRule()
+void ParseModSecRule(void *, void *)
 {
 
+}
+
+static int ModSecFreeConfigPolicy(
+    	tSfPolicyUserContextId config,
+	tSfPolicyId policyId,
+	void *pData
+    	)
+{
+  ModSecConfig *pPolicyConfig = (ModSecConfig *)pData;
+
+  // should free the ModSecConfig
+  
+  sfPolicyUserDataClear(config, policyId);
+  free(pPolicyConfig);
+  return 0;
+}
+
+static void ModSecFreeConfig(tSfPolicyUserContextId config)
+{
+    if(config == NULL)
+       return;
+
+    sfPolicyUserDataFreeIterate(config, ModSecFreeConfigPolicy);
+    sfPolicyConfigDelete(config);
 }
 
 /* Validates given port as an ModSec server port
@@ -471,7 +503,7 @@ static void enablePortStreamServices(struct _SnortConfig *sc, ModSecConfig *conf
     {
         uint32_t portNum;
 
-	for(portNum = 0; portNum < MAXPORTS; portNum++)
+	for(portNum = 0; portNum < MAX_PORTS; portNum++)
 	{
 	    if(config->ports[(portNum/8)] & (1<<(portNum%8)))
 	    {
@@ -489,7 +521,7 @@ static void enablePortStreamServices(struct _SnortConfig *sc, ModSecConfig *conf
 #ifdef TARGET_BASED
 static void _addServicesToStreamFilter(struct _SnortConfig *sc, tSfPolicyId policy_id)
 {
-    _dpd.streamAPI->set_service_filter_status(sc, ssh_app_id, PORT_MONITOR_SESSION, policy_id, 1);
+    _dpd.streamAPI->set_service_filter_status(sc, modsec_app_id, PORT_MONITOR_SESSION, policy_id, 1);
 }
 #endif
 
@@ -531,24 +563,24 @@ static void ModSecCleanExit(int signal, void *data)
 #ifdef SNORT_RELOAD
 static void ModSecReload(struct _SnortConfig *sc, char *argp, void **new_config)
 {
-    tSfPolicyUserContextId ex_swap_config;
+    tSfPolicyUserContextId modsec_swap_config = (tSfPolicyUserContextId)*new_config;
     ModSecConfig *config;
     tSfPolicyId policy_id = _dpd.getParserPolicy(sc);
 
     _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
 
-    ex_swap_config = sfPolicyConfigCreate();
-    if (ex_swap_config == NULL)
+    modsec_swap_config = sfPolicyConfigCreate();
+    if (modsec_swap_config == NULL)
         _dpd.fatalMsg("Could not allocate configuration struct.\n");
 
     config = ModSecParse(argp);
-    sfPolicyUserPolicySet(ex_swap_config, policy_id);
-    sfPolicyUserDataSetCurrent(ex_swap_config, config);
+    sfPolicyUserPolicySet(modsec_swap_config, policy_id);
+    sfPolicyUserDataSetCurrent(modsec_swap_config, config);
 
     /* Register the preprocessor function, Transport layer, ID 10000 */
     _dpd.addPreproc(sc, ModSecProcess, PRIORITY_TRANSPORT, 10000, PROTO_BIT__TCP | PROTO_BIT__UDP);
 
-    *new_config = (void *)ex_swap_config;
+    *new_config = (void *)modsec_swap_config;
     DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: Example is initialized\n"););
 }
 
