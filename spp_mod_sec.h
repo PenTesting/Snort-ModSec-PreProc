@@ -31,6 +31,10 @@
 #ifndef SPP_MOD_SEC_H
 #define SPP_MOD_SEC_H
 
+#include "sfPolicy.h"
+#include "sfPolicyUserData.h"
+#include "snort_bounds.h"
+
 #define MAX_PORTS 65536
 
 /*
@@ -47,7 +51,9 @@ typedef struct _modsecPortlistNode
 
 typedef struct _modsecConfig
 {
+    uint8_t AutodetectEnabled;  
     char ports[MAX_PORTS/8];
+    int ref_count;
 } ModSecConfig;
 
 /*

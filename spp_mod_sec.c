@@ -97,6 +97,7 @@ ModSecConfig *modsec_eval_config = NULL;
  */
 ModSecData * ModSecGetNewSession(SFSnortPacket *, tSfPolicyId);
 static void ModSecInit(struct _SnortConfig *, char *);
+static void FreeModSecData(void *);
 static void ModSecProcess(void *, void *);
 static ModSecConfig * ModSecParse(char *);
 //static void ParseModSecRule(void *, void *);
@@ -198,7 +199,7 @@ static void ModSecInit(struct _SnortConfig *sc, char *argp)
 
     sfPolicyUserDataSetCurrent(modsec_config, pPolicyConfig);
 
-    ParseModSecArgs(pPolicyConfig, (u_char *)argp);
+    //ParseModSecArgs(pPolicyConfig, (u_char *)argp);
 
     _dpd.addPreproc(sc, ModSecProcess, PRIORITY_APPLICATION, PP_MODSEC, PROTO_BIT__TCP | PROTO_BIT__UDP);
 
@@ -363,27 +364,7 @@ void ModSecProcess(void *pkt, void *context)
 
     sfPolicyUserPolicySet(modsec_config, policy_id);
 
-    /* char tmp[12]; */
-    /* bzero(tmp, 12); */
-    /* int length = 11; */
-
-    /* if(length > p->payload_size) */
-    /*     length = p->payload_size; */
-
-    /*
-     * removeSubstr function
-     *
-     * Remove a pattern from the string.
-     */
-    void removeSubstr(char *string, char *sub) {
-        char *match = string;
-        int len = strlen(sub);
-        while((match = strstr(match, sub))) {
-            *match = '\0';
-            strcat(string, match+len);
-            match++;
-        }
-    }
+   
 
     /* sfPolicyUserPolicySet(modsec_config, _dpd.getNapRuntimePolicy()); */
     /* config = (ModSecConfig *)sfPolicyUserDataGetCurrent(modsec_config); */
@@ -568,75 +549,97 @@ void ModSecProcess(void *pkt, void *context)
     /*     return; */
     /* } */
 
-    if (p->src_port == port)
-    {
+    char tmp[12];
+    bzero(tmp, 12);
+    int length = 11;
 
-        if(length > 0) {
-            _dpd.logMsg("Copying %i bytes of packet payload into buffer\n",length);
-            strncpy(tmp, (const char *) p->payload, length);
-            _dpd.logMsg("Payload data: %s\n", tmp);
-        }
+    /* if(length > p->payload_size) */
+    /*     length = p->payload_size; */
 
-        _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0);
-
-        int y;
-        FILE *data;
-        char action;
-        char line[100]; 	// output parsed string is limited
-        int counter = 0;
-        char keyword[] = "";	// no function whatsoever
-        int index = 0;
-	//int result;
-
-        struct rule {
-            char keyword1[100];
-            char keyword2[100];
-        } ruleset[10];
-
-        if((data=fopen("rule", "r")) != NULL) {
-            while(fgets(line,sizeof(line),data)) {
-                if((strcmp(line,keyword))) {
-                    char s[10] = "$,";
-                    char *token = strtok(line, s);
-
-                    while(token != NULL) {
-                        if(counter == 1) {
-                            strcpy(ruleset[index].keyword1, token);
-                        }
-                        if(counter == 2) {
-                            strcpy(ruleset[index].keyword2, token);
-                        }
-                        counter++;
-                        token = strtok(NULL, s);
-                    }
-                }
-            }
-        }
-
-        /* Skid's code */
-        for(y = 0; y < index; ++y) {
-            removeSubstr(ruleset[y].keyword1, "ARGS|XML:/* \"");
-            removeSubstr(ruleset[y].keyword1, "RGS_NAMES|");
-            printf("%s ", ruleset[y].keyword1);
-            removeSubstr(ruleset[y].keyword2, "\" \"phase:2");
-            printf("%s ", ruleset[y].keyword2);
-            printf("\n");
-        }
-
-        fclose(data);
-        return;
-    }
-
-    if(p->dst_port = port)
-    {
-        _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0);
-
-        if(length > 0) {
-            _dpd.logMsg("Copying %i bytes of packet payload into buffer\n", length);
-            strncpy(tmp, (const char *) p->payload, length);
-            _dpd.logMsg("Payload data: %s\n", tmp);
+    /*
+     * removeSubstr function
+     *
+     * Remove a pattern from the string.
+     */
+    void removeSubstr(char *string, char *sub) {
+        char *match = string;
+        int len = strlen(sub);
+        while((match = strstr(match, sub))) {
+            *match = '\0';
+            strcat(string, match+len);
+            match++;
         }
     }
+    
+    /* if (p->src_port == port) */
+    /* { */
+    /*  */
+    /*     if(length > 0) { */
+    /*         _dpd.logMsg("Copying %i bytes of packet payload into buffer\n",length); */
+    /*         strncpy(tmp, (const char *) p->payload, length); */
+    /*         _dpd.logMsg("Payload data: %s\n", tmp); */
+    /*     } */
+    /*  */
+    /*     _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0); */
+    /*  */
+    /*     int y; */
+    /*     FILE *data; */
+    /*     char action; */
+    /*     char line[100]; 	// output parsed string is limited */
+    /*     int counter = 0; */
+    /*     char keyword[] = "";	// no function whatsoever */
+    /*     int index = 0; */
+	/* //int result; */
+    /*  */
+    /*     struct rule { */
+    /*         char keyword1[100]; */
+    /*         char keyword2[100]; */
+    /*     } ruleset[10]; */
+    /*  */
+    /*     if((data=fopen("rule", "r")) != NULL) { */
+    /*         while(fgets(line,sizeof(line),data)) { */
+    /*             if((strcmp(line,keyword))) { */
+    /*                 char s[10] = "$,"; */
+    /*                 char *token = strtok(line, s); */
+    /*  */
+    /*                 while(token != NULL) { */
+    /*                     if(counter == 1) { */
+    /*                         strcpy(ruleset[index].keyword1, token); */
+    /*                     } */
+    /*                     if(counter == 2) { */
+    /*                         strcpy(ruleset[index].keyword2, token); */
+    /*                     } */
+    /*                     counter++; */
+    /*                     token = strtok(NULL, s); */
+    /*                 } */
+    /*             } */
+    /*         } */
+    /*     } */
+    /*  */
+    /*     #<{(| Skid's code |)}># */
+    /*     for(y = 0; y < index; ++y) { */
+    /*         removeSubstr(ruleset[y].keyword1, "ARGS|XML:#<{(| \""); */
+    /*         removeSubstr(ruleset[y].keyword1, "RGS_NAMES|"); */
+    /*         printf("%s ", ruleset[y].keyword1); */
+    /*         removeSubstr(ruleset[y].keyword2, "\" \"phase:2"); */
+    /*         printf("%s ", ruleset[y].keyword2); */
+    /*         printf("\n"); */
+    /*     } */
+    /*  */
+    /*     fclose(data); */
+    /*     return; */
+    /* } */
+    /*  */
+    /* if(p->dst_port = port) */
+    /* { */
+    /*     _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0); */
+    /*  */
+    /*     if(length > 0) { */
+    /*         _dpd.logMsg("Copying %i bytes of packet payload into buffer\n", length); */
+    /*         strncpy(tmp, (const char *) p->payload, length); */
+    /*         _dpd.logMsg("Payload data: %s\n", tmp); */
+    /*     } */
+    /* } */
 }
 
 ModSecData * ModSecGetNewSession(SFSnortPacket *p, tSfPolicyId policy_id)
@@ -655,11 +658,11 @@ ModSecData * ModSecGetNewSession(SFSnortPacket *p, tSfPolicyId policy_id)
         return NULL;
 
     /* Register the new data block in the stream session */
-    _dpd.sessionAPI->ssh_application_data(p->stream_session, PP_MODSEC, datap, FreeModSecData);
+    _dpd.sessionAPI->set_application_data(p->stream_session, PP_MODSEC, datap, FreeModSecData);
 
     datap->policy_id = policy_id;
     datap->config = modsec_config;
-    ((ModSecConfig *))sfPolicyUserDataGetCurrent(modsec_config)->ref_count++;
+    ((ModSecConfig *)sfPolicyUserDataGetCurrent(modsec_config))->ref_count++;
 
     return datap;
 }
@@ -702,10 +705,10 @@ static void ModSecFreeConfig(tSfPolicyUserContextId config)
 static void
 FreeModSecData(void *idatap)
 {
-    ModSecData *ssn = (ModSecdata *)idatap;
+    ModSecData *ssn = (ModSecData *)idatap;
     ModSecConfig *config = NULL;
 
-    if(ssn = NULL)
+    if(ssn == NULL)
         return;
 
     if(ssn->config != NULL)
@@ -880,7 +883,7 @@ static void ModSecReload(struct _SnortConfig *sc, char *argp, void **new_config)
     }
     sfPolicyUserDataSetCurrent(modsec_swap_config, pPolicyConfig);
 
-    ParseModSecArgs(pPolicyConfig, (u_char *)argp);
+    //ParseModSecArgs(pPolicyConfig, (u_char *)argp);
 
     _dpd.addPreproc(sc, ModSecProcess, PRIORITY_APPLICATION, PP_MODSEC, PROTO_BIT__TCP | PROTO_BIT__UDP);
 
