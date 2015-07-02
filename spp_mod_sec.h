@@ -50,6 +50,28 @@ typedef struct _modsecConfig
     char ports[MAX_PORTS/8];
 } ModSecConfig;
 
+/*
+ * Per-session data block containing current state
+ * of the ModSec preprocessor for the session/
+ *
+ * version: 		Version of ModSec detected for this session.
+ * num_enc_pkts: 	Number of encrypted packets seen on this session.
+ * num_client_bytes: 	Number of bytes of encrypted data send by client,
+ * 				without a server response.
+ * state_flags: 	Bit vector describing the current state of the
+ * 				session.
+ */
+typedef struct _modsecData
+{
+    uint8_t version;
+    uint16_t num_enc_pkts;
+    uint16_t num_client_bytes;
+    uint32_t state_flags;
+
+    tSfPolicyId policy_id;
+    tSfPolicyUserContextId config;
+} ModSecData;
+
 #define MODSEC_SERVERPORTS_KEYWORD 		"server_ports"
 
 #endif /* SPP_MOD_SEC_H */
