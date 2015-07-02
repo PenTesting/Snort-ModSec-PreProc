@@ -3,10 +3,10 @@ A Proof-of-Concept project started to turn ModSecurity into sniffer mode and wit
 
 #### Installation
 The installation procedure is the usual one:
-
+```Bash
 $ make
 $ make install -- you may need sudo
-
+```
 The module binaries should be placed in $SNORT_DIR/lib/snort_dynamicpreprocessor after the installation,and automatically loaded by Snort at the next start.
 
 #### TODO:
