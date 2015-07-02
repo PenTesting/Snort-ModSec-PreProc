@@ -1,6 +1,15 @@
-# Snort-ModSec-CRS-Parser
-Snort Dynamic Preprocessor to parse ModSecurity CRS
+#### Snort Preprocessor to parse ModSecurity Core RuleSet
+A Proof-of-Concept project started to turn ModSecurity into sniffer mode and with Snort Inline capability to drop packet once the packet matches with the attack signatures. Therefore, the payload should not be able to get to the target and reaching to the 5th layer and above. (Isn't it?)
 
-A simple projects started during my free time. This is for PoC and might not suitable for production purposes.
+#### TODO:
+1. Looking for collaboration
+    - To port the ModSecurity Engine into the preprocessor
+    - Build a CRS parser
+    - Trigger Snort Inline capability
 
-Status: In Progress..
+2. Documentation (?)
+3. Any suggestions (?)
+
+#### License
+
+GPLv License. Copyright (c) 2015 Fakhri Zulkifli. See [License](https://github.com/d0lph1n98/Snort-ModSec-CRS-Parser/blob/master/LICENSE).
