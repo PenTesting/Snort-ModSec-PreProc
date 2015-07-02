@@ -651,7 +651,7 @@ ModSecData * ModSecGetNewSession(SFSnortPacket *p, tSfPolicyId policy_id)
 
     datap = (ModSecData *)calloc(1, sizeof(ModSecData));
 
-    if(!data)
+    if(!datap)
         return NULL;
 
     /* Register the new data block in the stream session */
@@ -822,25 +822,73 @@ static void ModSecCleanExit(int signal, void *data)
 #ifdef SNORT_RELOAD
 static void ModSecReload(struct _SnortConfig *sc, char *argp, void **new_config)
 {
+    /* tSfPolicyUserContextId modsec_swap_config = (tSfPolicyUserContextId)*new_config; */
+    /* ModSecConfig *config; */
+    /* tSfPolicyId policy_id = _dpd.getParserPolicy(sc); */
+
     tSfPolicyUserContextId modsec_swap_config = (tSfPolicyUserContextId)*new_config;
-    ModSecConfig *config;
     tSfPolicyId policy_id = _dpd.getParserPolicy(sc);
+    ModSecConfig * pPolicyConfig = NULL;
 
-    _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
+    _dpd.logMsg("ModSec dynamic preprocessor configuration reloaded\n");
 
-    modsec_swap_config = sfPolicyConfigCreate();
-    if (modsec_swap_config == NULL)
-        _dpd.fatalMsg("Could not allocate configuration struct.\n");
+    /* modsec_swap_config = sfPolicyConfigCreate(); */
+    /* if (modsec_swap_config == NULL) */
+    /*     _dpd.fatalMsg("Could not allocate configuration struct.\n"); */
+    /*  */
+    /* config = ModSecParse(argp); */
+    /* sfPolicyUserPolicySet(modsec_swap_config, policy_id); */
+    /* sfPolicyUserDataSetCurrent(modsec_swap_config, config); */
+    /*  */
+    /* #<{(| Register the preprocessor function, Transport layer, ID 10000 |)}># */
+    /* _dpd.addPreproc(sc, ModSecProcess, PRIORITY_TRANSPORT, 10000, PROTO_BIT__TCP | PROTO_BIT__UDP); */
+    /*  */
+    /* *new_config = (void *)modsec_swap_config; */
+    /* DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: Example is initialized\n");); */
 
-    config = ModSecParse(argp);
+    if(modsec_swap_config == NULL)
+    {
+
+        //create a context
+	modsec_swap_config = sfPolicyConfigCreate();
+	if(modsec_swap_config == NULL)
+	{
+	    DynamicPreprocessorFatalMessage("Failed to allocate memory "
+					    "for ModSec config.\n");
+	}
+
+	if(_dpd.streamAPI == NULL)
+	{
+	    DynamicPreprocessorFatalMessage("SetupModSec(): The Stream preprocessor must be enabled.\n");
+	}
+	*new_config = (void *)modsec_swap_config;
+    }
+
     sfPolicyUserPolicySet(modsec_swap_config, policy_id);
-    sfPolicyUserDataSetCurrent(modsec_swap_config, config);
+    pPolicyConfig = (ModSecConfig *)sfPolicyUserDataGetCurrent(modsec_swap_config);
+    if(pPolicyConfig != NULL)
+    {
+       DynamicPreprocessorFatalMessage("ModSec preprocessor can only be "
+	   			       "configured once.\n");
+    }
 
-    /* Register the preprocessor function, Transport layer, ID 10000 */
-    _dpd.addPreproc(sc, ModSecProcess, PRIORITY_TRANSPORT, 10000, PROTO_BIT__TCP | PROTO_BIT__UDP);
+    pPolicyConfig = (ModSecConfig *)calloc(1, sizeof(ModSecConfig));
+    if(!pPolicyConfig)
+    {
+        DynamicPreprocessorFatalMessage("Could not allocate memory for "
+	    				"ModSec preprocessor configuration.\n");
+    }
+    sfPolicyUserDataSetCurrent(modsec_swap_config, pPolicyConfig);
 
-    *new_config = (void *)modsec_swap_config;
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: Example is initialized\n"););
+    ParseModSecArgs(pPolicyConfig, (u_char *)argp);
+
+    _dpd.addPreproc(sc, ModSecProcess, PRIORITY_APPLICATION, PP_MODSEC, PROTO_BIT__TCP | PROTO_BIT__UDP);
+
+    enablePortStreamServices(sc, pPolicyConfig, policy_id);
+
+#ifdef TARGET_BASED
+    _addServicesToStreamFilter(sc, policy_id);
+#endif
 }
 
 static int ModSecReloadVerify(struct _SnortConfig *sc, void *swap_config)
