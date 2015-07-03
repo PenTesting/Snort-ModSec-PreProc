@@ -87,7 +87,7 @@ tSfPolicyUserContextId modsec_swap_config = NULL;
 /*
  * Function prototype(s)
  */
-static void ModSecInit(struct _SnortConfig *, char *);
+static void ModSecInit(char *);
 static void ModSecProcess(void *, void *);
 static ModSec_config * ModSecParse(char *);
 //static void ParseModSecRule(void *, void *);
@@ -140,7 +140,7 @@ static void ModSecInit(struct _SnortConfig *sc, char *args)
         modsec_config = sfPolicyConfigCreate();
         if (modsec_config == NULL)
 	{
-            ModSecFatalError("Could not allocate configuration struct.\n");
+            ModSecFatalError("Could not allocate configuration struct.\n", __FILE__, __LINE__);
 	}
 
 	/* if(_dpd.streamAPI == NULL) */
@@ -458,7 +458,7 @@ static void ModSecReload(char *args)
 
 static int ModSecReloadSwapPolicyFree(tSfPolicyUserContextId config, tSfPolicyId policyId, void *data)
 {
-    ModSec_config *policy_config = (modsec_config *)data;
+    ModSec_config *policy_config = (ModSec_config *)data;
 
     sfPolicyUserDataClear(config, policyId);
     free(policy_config);
@@ -467,7 +467,6 @@ static int ModSecReloadSwapPolicyFree(tSfPolicyUserContextId config, tSfPolicyId
 
 static void * ModSecReloadSwap(void)
 {
-    tSfPolicyUserContextId modsec_swap_config = (tSfPolicyUserContextId)swap_config;
     tSfPolicyUserContextId old_config = modsec_config;
 
     if (modsec_swap_config == NULL)
