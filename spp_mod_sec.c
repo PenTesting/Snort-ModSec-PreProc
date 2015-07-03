@@ -89,11 +89,10 @@ tSfPolicyUserContextId modsec_swap_config = NULL;
  */
 static void ModSecInit(struct _SnortConfig *, char *);
 static void ModSecProcess(void *, void *);
-static ModSecConfig * ModSecParse(char *);
+static ModSec_config * ModSecParse(char *);
 //static void ParseModSecRule(void *, void *);
 #ifdef SNORT_RELOAD
-static void ModSecReload(struct _SnortConfig *, char *, void **);
-static int ModSecReloadVerify(struct _SnortConfig *, void *);
+static void ModSecReload(char *);
 static int ModSecReloadSwapPolicyFree(tSfPolicyUserContextId, tSfPolicyId, void *);
 static void * ModSecReloadSwap(struct _SnortConfig *, void *);
 static void ModSecReloadSwapFree(void *);
@@ -113,7 +112,7 @@ void SetupModSec(void)
     _dpd.registerPreproc("mod_sec", ModSecInit);
 #else
     _dpd.registerPreproc("mod_sec", ModSecInit, ModSecReload,
-                         ModSecReloadVerify, ModSecReloadSwap, ModSecReloadSwapFree);
+		    ModSecReloadSwap, ModSecReloadSwapFree);
 #endif
     _dpd.logMsg("ModSecurity Preprocessor Initialized!\n");
 
@@ -168,18 +167,18 @@ static void ModSecInit(struct _SnortConfig *sc, char *args)
 /*
  * \brief Parse the arguments passed to the module saving them to a valid configuration struct
  * \param args 		Arguments passed to the module
- * \return Pointer to ModSecConfig keeping the configuration for the module
+ * \return Pointer to ModSec_config keeping the configuration for the module
  */
-static ModSecConfig * ModSecParse(char *args)
+static ModSec_config * ModSecParse(char *args)
 {
     char *arg;
     char *match;
 
     unsigned short webserv_port = 0;
 
-    if(!(config = (ModSecConfig *)malloc(sizeof(ModSecConfig))))
+    if(!(config = (ModSec_config *)malloc(sizeof(ModSec_config))))
       	 ModSecFatalError("Could not allocate configuration struct", __FILE__, __LINE__);
-    memset(config, 0, sizeof(ModSecConfig));
+    memset(config, 0, sizeof(ModSec_config));
 
     /* Parsing the webserv_port option */
     if((arg = (char *)strcasestr(args, "webserv_port")))
@@ -203,13 +202,13 @@ static ModSecConfig * ModSecParse(char *args)
     _dpd.logMsg(" 	Web sever port: %d\n", config->webserv_port);
 }
   
-/* static ModSecConfig * ModSecParse(char *args) */
+/* static ModSec_config * ModSecParse(char *args) */
 /* { */
 /*     char *arg = NULL; */
 /*     char *argEnd = NULL; */
 /*     unsigned port = 0; */
 /*  */
-/*     ModSecConfig *config = (ModSecConfig *)calloc(1, sizeof(ModSecConfig)); */
+/*     ModSec_config *config = (ModSec_config *)calloc(1, sizeof(ModSec_config)); */
 /*  */
 /*     if (config == NULL) */
 /*         _dpd.fatalMsg("Could not allocate configuration struct.\n"); */
@@ -306,13 +305,13 @@ static ModSecConfig * ModSecParse(char *args)
 void ModSecProcess(void *pkt, void *context)
 {
     SFSnortPacket *p = (SFSnortPacket *)pkt;
-    ModSecConfig *config;
+    ModSec_config *config;
     
     sfPolicyUserPolicySet(modsec_config, _dpd.getNapRuntimePolicy());
-    _config = (ModSecConfig *)sfPolicyUserDataGetCurrent(modsec_config);
+    _config = (ModSec_config *)sfPolicyUserDataGetCurrent(modsec_config);
 
     /* sfPolicyUserPolicySet(modsec_config, _dpd.getNapRuntimePolicy()); */
-    /* config = (ModSecConfig *)sfPolicyUserDataGetCurrent(modsec_config); */
+    /* config = (ModSec_config *)sfPolicyUserDataGetCurrent(modsec_config); */
     if (config == NULL)
         return;
 
@@ -340,9 +339,9 @@ void ModSecProcess(void *pkt, void *context)
     /*     return; */
     /* } */
 
-    char tmp[12];
-    bzero(tmp, 12);
-    int length = 11;
+    /* char tmp[12]; */
+    /* bzero(tmp, 12); */
+    /* int length = 11; */
 
     /* if(length > p->payload_size) */
     /*     length = p->payload_size; */
@@ -434,7 +433,7 @@ void ModSecProcess(void *pkt, void *context)
 }
 
 #ifdef SNORT_RELOAD
-static void ModSecReload(struct _SnortConfig *sc, char *args, void **new_config)
+static void ModSecReload(char *args)
 {
     tSfPolicyId policy_id = _dpd.getParserPolicy();
 
@@ -454,19 +453,19 @@ static void ModSecReload(struct _SnortConfig *sc, char *args, void **new_config)
     /* Register the preprocessor function, Transport layer, ID 10000 */
     _dpd.addPreproc(ModSecProcess, PRIORITY_TRANSPORT, 10000, PROTO_BIT__TCP | PROTO_BIT__UDP);
 
-    DEBUG_WRAP(_dpd.debugMsg(DEBUG_PLUGIN, "Preprocessor: ModSec is initialized\n");
+    DEBUG_WRAP(_dpd.debugMsg(DEBUG_PLUGIN, "Preprocessor: ModSec is initialized\n"));
 }
 
 static int ModSecReloadSwapPolicyFree(tSfPolicyUserContextId config, tSfPolicyId policyId, void *data)
 {
-    ModSecConfig *policy_config = (ModSecConfig *)data;
+    ModSec_config *policy_config = (modsec_config *)data;
 
     sfPolicyUserDataClear(config, policyId);
     free(policy_config);
     return 0;
 }
 
-static void * ModSecReloadSwap(struct _SnortConfig *sc, void *swap_config)
+static void * ModSecReloadSwap(void)
 {
     tSfPolicyUserContextId modsec_swap_config = (tSfPolicyUserContextId)swap_config;
     tSfPolicyUserContextId old_config = modsec_config;

@@ -36,49 +36,144 @@
 #include "snort_bounds.h"
 
 #define MAX_PORTS 65536
-#define DEFAULT_WEBSERV_PORT 80
 
 /*
- * Default ModSecurity Port
+ * Default web server port
  */
-#define MODSEC_PORT 80
+#define DEFAULT_WEBSERV_PORT 80
 
 extern void SetupModSec();
 
-typedef struct _modsecPortlistNode
-{
-    u_int16_t server_port;
-} ModSecPortNode;
-
-typedef struct _modsecConfig
-{
-    uint8_t AutodetectEnabled;  
-    char ports[MAX_PORTS/8];
-    int ref_count;
-} ModSecConfig;
-
 /*
- * Per-session data block containing current state
- * of the ModSec preprocessor for the session/
- *
- * version: 		Version of ModSec detected for this session.
- * num_enc_pkts: 	Number of encrypted packets seen on this session.
- * num_client_bytes: 	Number of bytes of encrypted data send by client,
- * 				without a server response.
- * state_flags: 	Bit vector describing the current state of the
- * 				session.
+ * Data type containing the configuration of the module
  */
-typedef struct _modsecData
+typedef struct
 {
-    uint8_t version;
-    uint16_t num_enc_pkts;
-    uint16_t num_client_bytes;
-    uint32_t state_flags;
+    /*
+     * Port where the targeted webserver with web interface will listen onto
+     */
+    unsigned webserv_port;
 
-    tSfPolicyId policy_id;
-    tSfPolicyUserContextId config;
-} ModSecData;
+    /*
+     * (Absolute) path to the directory containing the HTML files for the web interface
+     */
+    char webserv_dir[1024];
 
-#define MODSEC_SERVERPORTS_KEYWORD 		"server_ports"
+} ModSec_config;
+
+typedef struct ModSec_snort_alert
+{
+    /* Identifiers of the alert */
+    unsigned int   gid;
+    unsigned int   sid;
+    unsigned int   rev;
+
+    /* Snort priority, description,
+     * classification and timestamp
+     * of the alert 
+     */
+    unsigned short priority;
+    char 	   *desc;
+    char 	   *classification;
+    time_t 	   timestamp;
+
+    /* IP header information */
+    uint8_t 	   ip_tos;
+    uint16_t 	   ip_len;
+    uint16_t 	   ip_id;
+    uint8_t 	   ip_ttl;
+    uint8_t 	   ip_proto;
+    uint32_t 	   ip_src_addr;
+    uint32_t 	   ip_dst_addr;
+
+    /* TCP header information */
+    uint16_t 	   tcp_src_port;
+    uint16_t 	   tcp_dst_port;
+    uint32_t 	   tcp_seq;
+    uint32_t 	   tcp_ack;
+    uint8_t 	   tcp_flags;
+    uint16_t 	   tcp_window;
+    uint16_t 	   tcp_len;
+
+    /*
+     * Reference to the TCP Stream 
+     * associated to the alert, if any
+     */
+    struct pkt_info *stream;
+
+    /*
+     * Pointer to the next alert in 
+     * the log, if any
+     */
+    struct _ModSec_snort_alert *next;
+
+    /*
+     * Hierarchies for addresses and ports,
+     * if the clustering algorithm is used 
+     */
+    //hierarchy_node *h_node[CLUSTER_TYPES];
+
+    /*
+     * Hyperalert information, pre-conditions 
+     * and post-conditions 
+     */
+    ModSec_hyperalert_info *hyperalert;
+
+    /*
+     * Latitude and longitude of the attacker IP, 
+     * if available
+     */
+    double geocoord[2];
+
+    /* Parent alerts in the chain, if any */
+    struct _ModSec_snort_alert **parent_alerts;
+
+    /* Number of parent alerts */
+    unsigned int 	n_parentes_alerts;
+
+    /*
+     * Array of directly correlated 'derived' 
+     * alerts from the current one, if any 
+     */
+    struct _ModSec_snort_alert 	**derived_alerts;
+
+    /** Number of derived alerts */
+    unsigned int 	n_derived_alerts;
+
+    /*
+     * Alert ID on the database, if the alerts 
+     * are stored on a database as well 
+     */
+    unsigned long int 	alert_id;
+} ModSec_snort_int;
+
+typedef struct
+{
+    unsigned int gid;
+    unsigned int sid;
+    unsigned int rev;
+} ModSec_hyperalert_key;
+
+typedef struct
+{
+    /* Hyperalert key */
+    ModSec_hyperalert_info;
+
+    /** Pre-conditions, as array of strings */
+    char 	**preconds;
+
+    /** Number of post-conditions */
+    unsigned int 	n_preconds;
+
+    /** Post-conditions, as array of strings */
+    char 	**postconds;
+
+    /** Number of post-conditions */
+    unsigned int 	n_postconds;
+
+    /** Make the struct 'hashable' */
+    UT_hash_handle 	hh;
+} ModSec_hyperalert_info;
+
 
 #endif /* SPP_MOD_SEC_H */
