@@ -43,6 +43,7 @@
 #define DEFAULT_WEBSERV_PORT 80
 
 extern void SetupModSec();
+extern DynamicPreprocessorData _dpd;
 
 /*
  * Data type containing the configuration of the module
@@ -175,5 +176,19 @@ typedef struct
     UT_hash_handle 	hh;
 } ModSec_hyperalert_info;
 
+/** Function pointer to the function used for getting the alert list (from log file, db, ...) */
+extern ModSec_snort_alert* (*get_alerts)(void);
+
+/** Buffer containing the alerts to be serialized on the binary history file */
+extern ModSec_snort_alert  **alerts_pool;
+
+/** Number of alerts contained in the buffer to be serialized */
+extern unsigned int 	   alerts_pool_count;
+
+/** Mutex variable for writing on the output database */
+extern pthread_mutex_t 	outdb_mutex;
+
+/** Configuration of the module */
+extern ModSec_config 	*config;
 
 #endif /* SPP_MOD_SEC_H */

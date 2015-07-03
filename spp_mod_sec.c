@@ -69,7 +69,7 @@ const int MINOR_VERSION = 1;
 const int BUILD_VERSION = 1;
 const char *PREPROC_NAME = "SF_MODSEC";
 
-#define SetupModSec DYNAMIC_PREPROC_SETUP
+#define DYNAMIC_PREPROC_SETUP ModSec_setup
 
 ModSec_snort_alert* (*get_alerts)(void);
 ModSec_config *config = NULL;
@@ -94,7 +94,7 @@ static ModSec_config * ModSecParse(char *);
 #ifdef SNORT_RELOAD
 static void ModSecReload(char *);
 static int ModSecReloadSwapPolicyFree(tSfPolicyUserContextId, tSfPolicyId, void *);
-static void * ModSecReloadSwap(struct _SnortConfig *, void *);
+static void * ModSecReloadSwap(void);
 static void ModSecReloadSwapFree(void *);
 #endif
 
@@ -106,7 +106,7 @@ ModSecFatalError(const char *msg, const char *file, const int line)
 		((errno != 0) ? strerror(errno) : ""));
 }
 
-void SetupModSec(void)
+void ModSec_setup(void)
 {
 #ifndef SNORT_RELOAD
     _dpd.registerPreproc("mod_sec", ModSecInit);
@@ -129,9 +129,9 @@ void SetupModSec(void)
  *
  * RETURNS: 	Nothing.
  */
-static void ModSecInit(struct _SnortConfig *sc, char *args)
+static void ModSecInit(char *args)
 {
-    tSfPolicyId policy_id = _dpd.getParserPolicy(sc);
+    tSfPolicyId policy_id = _dpd.getParserPolicy();
 
     _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
 
@@ -305,7 +305,7 @@ static ModSec_config * ModSecParse(char *args)
 void ModSecProcess(void *pkt, void *context)
 {
     SFSnortPacket *p = (SFSnortPacket *)pkt;
-    ModSec_config *config;
+    ModSec_config *_config;
     
     sfPolicyUserPolicySet(modsec_config, _dpd.getNapRuntimePolicy());
     _config = (ModSec_config *)sfPolicyUserDataGetCurrent(modsec_config);
@@ -473,6 +473,7 @@ static void * ModSecReloadSwap(void)
         return NULL;
 
     modsec_config = modsec_swap_config;
+    modsec_swap_config = NULL;
 
     return (void *)old_config;
 }
