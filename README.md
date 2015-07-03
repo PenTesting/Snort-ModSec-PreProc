@@ -22,4 +22,4 @@ The module binaries should be placed in $SNORT_DIR/lib/snort_dynamicpreprocessor
 
 #### License
 
-GPLv License. Copyright (c) 2015 Fakhri Zulkifli. See [License](https://github.com/d0lph1n98/Snort-ModSec-CRS-Parser/blob/master/LICENSE).
+GPLv3 License. Copyright (c) 2015 Fakhri Zulkifli. See [License](https://github.com/d0lph1n98/Snort-ModSec-CRS-Parser/blob/master/LICENSE).
