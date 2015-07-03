@@ -36,6 +36,7 @@
 #include "snort_bounds.h"
 
 #define MAX_PORTS 65536
+#define DEFAULT_WEBSERV_PORT 80
 
 /*
  * Default ModSecurity Port
