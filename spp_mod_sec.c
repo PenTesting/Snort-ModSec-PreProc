@@ -199,98 +199,100 @@ static ModSec_config * ModSecParse(char *args)
         config->webserv_port = DEFAULT_WEBSERV_PORT;
     }
 
-    _dpd.logMsg(" 	Web sever port: %d\n", config->webserv_port);
+    _dpd.logMsg("Web server port: %d\n", config->webserv_port);
 }
-  
-/* static ModSec_config * ModSecParse(char *args) */
-/* { */
-/*     char *arg = NULL; */
-/*     char *argEnd = NULL; */
-/*     unsigned port = 0; */
-/*  */
-/*     ModSec_config *config = (ModSec_config *)calloc(1, sizeof(ModSec_config)); */
-/*  */
-/*     if (config == NULL) */
-/*         _dpd.fatalMsg("Could not allocate configuration struct.\n"); */
-/*  */
-/*     config->ports[PORT_INDEX(80)] |= CONV_PORT(80); */
-/*  */
-/*     arg = strtok(args, " "); */
-/*  */
-/*     if(!args) */
-/*     { */
-/*       #<{(| Help Display |)}># */
-/*       return; */
-/*     } */
-/*  */
-/*     argEnd = strdup((char*) args); */
-/*  */
-/*     if(!argEnd) */
-/*     { */
-/*       ModSecFatalError("Could not allocate memory to parse ModSec options.\n"); */
-/*       return; */
-/*     } */
-/*  */
-/*     while(arg) { */
-/*         if(!strcmp(arg, MODSEC_SERVERPORTS_KEYWORD)) */
-/*         { */
-/* 	    #<{(| Use the user specified '80' |)}># */
-/* 	    config->ports[ PORT_INDEX( 80 ) ] = 0; */
-/*  */
-/*             arg = strtok(NULL, "\t\n\r"); */
-/*             if (!arg) */
-/*             { */
-/*                 _dpd.fatalMsg("ModSec: Missing port\n"); */
-/*             } */
-/*  */
-/* 	    #<{(| Remove the braces, they said |)}># */
-/* 	    arg = strtok(NULL, " "); */
-/* 	    if ((!arg) || (arg[0] != '{')) */
-/* 	    { */
-/* 	      ModSecFatalError("Bad value specified for %s.\n",MODSEC_SERVERPORTS_KEYWORD); */
-/* 	    } */
-/*  */
-/* 	    while ((arg) && (arg[0] != '}')) */
-/* 	    { */
-/* 	      if (!isdigit((int)arg[0])) */
-/* 	      { */
-/* 		ModSecFatalError("Bad port &s.\n", arg); */
-/* 	      } */
-/* 	      else */
-/* 	      { */
-/* 		port = atoi(arg); */
-/* 		if(port < 0 || port > MAX_PORTS) */
-/* 		{ */
-/* 		  ModSecFatalError("Port value illegitimate: %s\n", arg); */
-/* 		} */
-/*  */
-/* 		config->ports[PORT_INDEX(port)] |= CONV_PORT(port); */
-/* 	      } */
-/*  */
-/* 	      arg = strtok(NULL, " "); */
-/* 	    } */
-/* 	} */
-/*             #<{(| port = strtol(arg, &argEnd, 10); |)}># */
-/*             #<{(| if (port < 0 || port > 65535) |)}># */
-/*             #<{(| { |)}># */
-/*             #<{(|     _dpd.fatalMsg("ModSec: Invalid port %d\n", port); |)}># */
-/*             #<{(| } |)}># */
-/*             #<{(| config->portToCheck = (u_int16_t)port; |)}># */
-/*             #<{(|  |)}># */
-/*             #<{(| _dpd.logMsg("    Port: %d\n", config->portToCheck); |)}># */
-/*  */
-/*         else */
-/*         { */
-/*             #<{(| _dpd.fatalMsg("ModSec: Invalid option %s\n", |)}># */
-/*             #<{(|               arg?arg:"(missing port)"); |)}># */
-/* 	    ModSecFatalError("Invalid argument: %s\n", arg); */
-/* 	    return; */
-/*         } */
-/*  */
-/* 	arg = strtok(NULL, " "); */
-/*     } */
-/*     return config; */
-/* } */
+
+#if 0
+static ModSec_config * ModSecParse(char *args)
+{
+    char *arg = NULL;
+    char *argEnd = NULL;
+    unsigned port = 0;
+
+    ModSec_config *config = (ModSec_config *)calloc(1, sizeof(ModSec_config));
+
+    if (config == NULL)
+        _dpd.fatalMsg("Could not allocate configuration struct.\n");
+
+    config->ports[PORT_INDEX(80)] |= CONV_PORT(80);
+
+    arg = strtok(args, " ");
+
+    if(!args)
+    {
+      /* Help Display */
+      return;
+    }
+
+    argEnd = strdup((char*) args);
+
+    if(!argEnd)
+    {
+      ModSecFatalError("Could not allocate memory to parse ModSec options.\n");
+      return;
+    }
+
+    while(arg) {
+        if(!strcmp(arg, MODSEC_SERVERPORTS_KEYWORD))
+        {
+	    /* Use the user specified '80' */
+	    config->ports[ PORT_INDEX( 80 ) ] = 0;
+
+            arg = strtok(NULL, "\t\n\r");
+            if (!arg)
+            {
+                _dpd.fatalMsg("ModSec: Missing port\n");
+            }
+
+	    /* Remove the braces, they said */
+	    arg = strtok(NULL, " ");
+	    if ((!arg) || (arg[0] != '{'))
+	    {
+	      ModSecFatalError("Bad value specified for %s.\n",MODSEC_SERVERPORTS_KEYWORD);
+	    }
+
+	    while ((arg) && (arg[0] != '}'))
+	    {
+	      if (!isdigit((int)arg[0]))
+	      {
+		ModSecFatalError("Bad port &s.\n", arg);
+	      }
+	      else
+	      {
+		port = atoi(arg);
+		if(port < 0 || port > MAX_PORTS)
+		{
+		  ModSecFatalError("Port value illegitimate: %s\n", arg);
+		}
+
+		config->ports[PORT_INDEX(port)] |= CONV_PORT(port);
+	      }
+
+	      arg = strtok(NULL, " ");
+	    }
+	}
+            /* port = strtol(arg, &argEnd, 10); */
+            /* if (port < 0 || port > 65535) */
+            /* { */
+            /*     _dpd.fatalMsg("ModSec: Invalid port %d\n", port); */
+            /* } */
+            /* config->portToCheck = (u_int16_t)port; */
+            /*  */
+            /* _dpd.logMsg("    Port: %d\n", config->portToCheck); */
+
+        else
+        {
+            /* _dpd.fatalMsg("ModSec: Invalid option %s\n", */
+            /*               arg?arg:"(missing port)"); */
+	    ModSecFatalError("Invalid argument: %s\n", arg);
+	    return;
+        }
+
+	arg = strtok(NULL, " ");
+    }
+    return config;
+}
+#endif
 
 /* Main runtime entry point for ModSec preprocessor.
  * Analyzes ModSec packets for anomalies/exploits.
