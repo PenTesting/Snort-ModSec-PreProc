@@ -133,7 +133,7 @@ void ModSec_setup(void)
  */
 static void ModSecInit(char *args)
 {
-    tSfPolicyId policy_id = _dpd.getParserPolicy();
+    //tSfPolicyId policy_id = _dpd.getParserPolicy();
 
     _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
 
@@ -152,7 +152,7 @@ static void ModSecInit(char *args)
     }
 
     config = ModSecParse(args);
-    sfPolicyUserPolicySet(modsec_config, policy_id);
+    //sfPolicyUserPolicySet(modsec_config, policy_id);
     sfPolicyUserDataSetCurrent(modsec_config, config);
 
     /* If webserv_port is != 0, start the web server */
@@ -405,7 +405,7 @@ void ModSecProcess(void *pkt, void *context)
 #ifdef SNORT_RELOAD
 static void ModSecReload(char *args)
 {
-    tSfPolicyId policy_id = _dpd.getParserPolicy();
+    //tSfPolicyId policy_id = _dpd.getParserPolicy();
 
     _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
 
@@ -417,7 +417,7 @@ static void ModSecReload(char *args)
     }
 
     config = ModSecParse(args);
-    sfPolicyUserPolicySet(modsec_swap_config, policy_id);
+    //sfPolicyUserPolicySet(modsec_swap_config, policy_id);
     sfPolicyUserDataSetCurrent(modsec_swap_config, config);
 
     /* Register the preprocessor function, Transport layer, ID 10000 */
