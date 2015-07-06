@@ -326,6 +326,8 @@ void ModSecProcess(void *pkt, void *context)
     // preconditions - what we registered for
     assert(IsUDP(p) || IsTCP(p));
 
+    ModSecPktEnqueue(pkt);
+
     /*
      * removeSubstr function
      *

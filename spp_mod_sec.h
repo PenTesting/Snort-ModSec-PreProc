@@ -184,6 +184,15 @@ typedef struct ModSec_snort_alert
     unsigned long int 	alert_id;
 } ModSec_snort_int;
 
+/*
+ * The unused attribute is needed for gcc to avoid raising a warning
+ * of "unused variable" when compiling with -Wall -pedantic -pedatic errors,
+ * since this array is declared here but only used in two source files
+ */
+
+void ModSecFatalError(const char *msg, const char *file, const int line);
+void ModSecPktEnqueue(SFSnortPacket*);
+
 /** Function pointer to the function used for getting the alert list (from log file, db, ...) */
 //extern ModSec_snort_alert* (*get_alerts)(void);
 
