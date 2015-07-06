@@ -82,7 +82,7 @@ tSfPolicyUserContextId modsec_swap_config = NULL;
 #endif
 
 /* Already put in preprocids.h, still the same :( */
-#define PP_MODSEC 		43
+#define PP_MODSEC 43
 
 /*
  * Function prototype(s)
@@ -101,9 +101,9 @@ static void ModSecReloadSwapFree(void *);
 void
 ModSecFatalError(const char *msg, const char *file, const int line)
 {
-  	_dpd.fatalMsg("%s: %s at %s:%d (%s)\n",
-	    	PREPROC_NAME, msg, file, line,
-		((errno != 0) ? strerror(errno) : ""));
+    _dpd.fatalMsg("%s: %s at %s:%d (%s)\n",
+                  PREPROC_NAME, msg, file, line,
+                  ((errno != 0) ? strerror(errno) : ""));
 }
 
 void ModSec_setup(void)
@@ -112,7 +112,7 @@ void ModSec_setup(void)
     _dpd.registerPreproc("mod_sec", ModSecInit);
 #else
     _dpd.registerPreproc("mod_sec", ModSecInit, ModSecReload,
-		    ModSecReloadSwap, ModSecReloadSwapFree);
+                         ModSecReloadSwap, ModSecReloadSwapFree);
 #endif
     _dpd.logMsg("ModSecurity Preprocessor Initialized!\n");
 
@@ -139,14 +139,14 @@ static void ModSecInit(char *args)
     {
         modsec_config = sfPolicyConfigCreate();
         if (modsec_config == NULL)
-	{
+        {
             ModSecFatalError("Could not allocate configuration struct.\n", __FILE__, __LINE__);
-	}
+        }
 
-	/* if(_dpd.streamAPI == NULL) */
-	/* { */
-	/*     ModSecFatalError("SetupModSec(): The Stream preprocessor must be enabled.\n"); */
-	/* } */
+        /* if(_dpd.streamAPI == NULL) */
+        /* { */
+        /*     ModSecFatalError("SetupModSec(): The Stream preprocessor must be enabled.\n"); */
+        /* } */
     }
 
     config = ModSecParse(args);
@@ -156,45 +156,47 @@ static void ModSecInit(char *args)
     /* If webserv_port is != 0, start the web server */
     if(config->webserv_port != 0)
     {
-        
+
     }
-    
+
     /* Register the preprocessor function, Transport layer, ID 10000 */
     _dpd.addPreproc(ModSecProcess, PRIORITY_TRANSPORT, 10000, PROTO_BIT__TCP | PROTO_BIT__UDP);
     DEBUG_WRAP(_dpd.debugMsg(DEBUG_PLUGIN, "Preprocessor: ModSec is initialized\n"););
 }
-    
-/*
- * \brief Parse the arguments passed to the module saving them to a valid configuration struct
- * \param args 		Arguments passed to the module
- * \return Pointer to ModSec_config keeping the configuration for the module
+
+/* Parse the arguments passed to the module saving them to a valid configuration struct
+ *
+ * PARAMETERS:
+ *
+ * args: 	Arguments passed to the module
+ *
+ * RETURN: 	Pointer to ModSec_config keeping the configuration for the module
  */
 static ModSec_config * ModSecParse(char *args)
 {
     char *arg;
-    char *match;
+    // char *match;
 
     unsigned short webserv_port = 0;
 
     if(!(config = (ModSec_config *)malloc(sizeof(ModSec_config))))
-      	 ModSecFatalError("Could not allocate configuration struct", __FILE__, __LINE__);
+        ModSecFatalError("Could not allocate configuration struct", __FILE__, __LINE__);
     memset(config, 0, sizeof(ModSec_config));
 
     /* Parsing the webserv_port option */
-    if((arg = (char *)strcasestr(args, "webserv_port")))
+    /* TODO: SSL_ENABLED port option */
+    if((arg = (char *)strcmp(args, "webserv_port")))
     {
-        for(arg += strlen("webserv_port");
-	    		*arg && (*arg < '0' || *arg > '9');
-			arg++);
+        for(arg += strlen("webserv_port"); *arg && (*arg < '0' || *arg > MAX_PORTS); arg++);
 
-	if(!(*arg))
-	{
-	    ModSecFatalError("webserv_port option used but "
-					"no value specified", __FILE__, __LINE__);
-	}
+        if(!(*arg))
+        {
+            ModSecFatalError("webserv_port option used but "
+                             "no value specified", __FILE__, __LINE__);
+        }
 
-	webserv_port = (unsigned short)strtoul(arg, NULL, 10);
-	config->webserv_port = webserv_port;
+        webserv_port = (unsigned short)strtoul(arg, NULL, 10);
+        config->webserv_port = webserv_port;
     } else {
         config->webserv_port = DEFAULT_WEBSERV_PORT;
     }
@@ -220,23 +222,23 @@ static ModSec_config * ModSecParse(char *args)
 
     if(!args)
     {
-      /* Help Display */
-      return;
+        /* Help Display */
+        return;
     }
 
     argEnd = strdup((char*) args);
 
     if(!argEnd)
     {
-      ModSecFatalError("Could not allocate memory to parse ModSec options.\n");
-      return;
+        ModSecFatalError("Could not allocate memory to parse ModSec options.\n");
+        return;
     }
 
     while(arg) {
         if(!strcmp(arg, MODSEC_SERVERPORTS_KEYWORD))
         {
-	    /* Use the user specified '80' */
-	    config->ports[ PORT_INDEX( 80 ) ] = 0;
+            /* Use the user specified '80' */
+            config->ports[ PORT_INDEX( 80 ) ] = 0;
 
             arg = strtok(NULL, "\t\n\r");
             if (!arg)
@@ -244,51 +246,51 @@ static ModSec_config * ModSecParse(char *args)
                 _dpd.fatalMsg("ModSec: Missing port\n");
             }
 
-	    /* Remove the braces, they said */
-	    arg = strtok(NULL, " ");
-	    if ((!arg) || (arg[0] != '{'))
-	    {
-	      ModSecFatalError("Bad value specified for %s.\n",MODSEC_SERVERPORTS_KEYWORD);
-	    }
+            /* Remove the braces, they said */
+            arg = strtok(NULL, " ");
+            if ((!arg) || (arg[0] != '{'))
+            {
+                ModSecFatalError("Bad value specified for %s.\n",MODSEC_SERVERPORTS_KEYWORD);
+            }
 
-	    while ((arg) && (arg[0] != '}'))
-	    {
-	      if (!isdigit((int)arg[0]))
-	      {
-		ModSecFatalError("Bad port &s.\n", arg);
-	      }
-	      else
-	      {
-		port = atoi(arg);
-		if(port < 0 || port > MAX_PORTS)
-		{
-		  ModSecFatalError("Port value illegitimate: %s\n", arg);
-		}
+            while ((arg) && (arg[0] != '}'))
+            {
+                if (!isdigit((int)arg[0]))
+                {
+                    ModSecFatalError("Bad port &s.\n", arg);
+                }
+                else
+                {
+                    port = atoi(arg);
+                    if(port < 0 || port > MAX_PORTS)
+                    {
+                        ModSecFatalError("Port value illegitimate: %s\n", arg);
+                    }
 
-		config->ports[PORT_INDEX(port)] |= CONV_PORT(port);
-	      }
+                    config->ports[PORT_INDEX(port)] |= CONV_PORT(port);
+                }
 
-	      arg = strtok(NULL, " ");
-	    }
-	}
-            /* port = strtol(arg, &argEnd, 10); */
-            /* if (port < 0 || port > 65535) */
-            /* { */
-            /*     _dpd.fatalMsg("ModSec: Invalid port %d\n", port); */
-            /* } */
-            /* config->portToCheck = (u_int16_t)port; */
-            /*  */
-            /* _dpd.logMsg("    Port: %d\n", config->portToCheck); */
+                arg = strtok(NULL, " ");
+            }
+        }
+        /* port = strtol(arg, &argEnd, 10); */
+        /* if (port < 0 || port > 65535) */
+        /* { */
+        /*     _dpd.fatalMsg("ModSec: Invalid port %d\n", port); */
+        /* } */
+        /* config->portToCheck = (u_int16_t)port; */
+        /*  */
+        /* _dpd.logMsg("    Port: %d\n", config->portToCheck); */
 
         else
         {
             /* _dpd.fatalMsg("ModSec: Invalid option %s\n", */
             /*               arg?arg:"(missing port)"); */
-	    ModSecFatalError("Invalid argument: %s\n", arg);
-	    return;
+            ModSecFatalError("Invalid argument: %s\n", arg);
+            return;
         }
 
-	arg = strtok(NULL, " ");
+        arg = strtok(NULL, " ");
     }
     return config;
 }
@@ -308,45 +310,17 @@ void ModSecProcess(void *pkt, void *context)
 {
     SFSnortPacket *p = (SFSnortPacket *)pkt;
     ModSec_config *_config;
-    
+
     sfPolicyUserPolicySet(modsec_config, _dpd.getNapRuntimePolicy());
     _config = (ModSec_config *)sfPolicyUserDataGetCurrent(modsec_config);
 
     /* sfPolicyUserPolicySet(modsec_config, _dpd.getNapRuntimePolicy()); */
     /* config = (ModSec_config *)sfPolicyUserDataGetCurrent(modsec_config); */
-    if (config == NULL)
+    if (_config == NULL)
         return;
 
     // preconditions - what we registered for
     assert(IsUDP(p) || IsTCP(p));
-    //assert(p->payload && p->payload_size && IPH_IS_VALID(p) && p->tcp_header)
-
-    // Get the snort packet
-    //_dpd.logMsg(p);
-
-    /* if (p->src_port == config->portToCheck) */
-    /* { */
-    /*     #<{(| Source port matched, log alert |)}># */
-    /*     _dpd.alertAdd(GENERATOR_EXAMPLE, SRC_PORT_MATCH, */
-    /*                   1, 0, 3, SRC_PORT_MATCH_STR, 0); */
-    /*  */
-    /*     return; */
-    /* } */
-    /*  */
-    /* if (p->dst_port == config->portToCheck) */
-    /* { */
-    /*     #<{(| Destination port matched, log alert |)}># */
-    /*     _dpd.alertAdd(GENERATOR_EXAMPLE, DST_PORT_MATCH, */
-    /*                   1, 0, 3, DST_PORT_MATCH_STR, 0); */
-    /*     return; */
-    /* } */
-
-    /* char tmp[12]; */
-    /* bzero(tmp, 12); */
-    /* int length = 11; */
-
-    /* if(length > p->payload_size) */
-    /*     length = p->payload_size; */
 
     /*
      * removeSubstr function
@@ -362,76 +336,64 @@ void ModSecProcess(void *pkt, void *context)
             match++;
         }
     }
-    
-    /* if (p->src_port == port) */
-    /* { */
-    /*  */
-    /*     if(length > 0) { */
-    /*         _dpd.logMsg("Copying %i bytes of packet payload into buffer\n",length); */
-    /*         strncpy(tmp, (const char *) p->payload, length); */
-    /*         _dpd.logMsg("Payload data: %s\n", tmp); */
-    /*     } */
-    /*  */
-    /*     _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0); */
-    /*  */
-    /*     int y; */
-    /*     FILE *data; */
-    /*     char action; */
-    /*     char line[100]; 	// output parsed string is limited */
-    /*     int counter = 0; */
-    /*     char keyword[] = "";	// no function whatsoever */
-    /*     int index = 0; */
-	/* //int result; */
-    /*  */
-    /*     struct rule { */
-    /*         char keyword1[100]; */
-    /*         char keyword2[100]; */
-    /*     } ruleset[10]; */
-    /*  */
-    /*     if((data=fopen("rule", "r")) != NULL) { */
-    /*         while(fgets(line,sizeof(line),data)) { */
-    /*             if((strcmp(line,keyword))) { */
-    /*                 char s[10] = "$,"; */
-    /*                 char *token = strtok(line, s); */
-    /*  */
-    /*                 while(token != NULL) { */
-    /*                     if(counter == 1) { */
-    /*                         strcpy(ruleset[index].keyword1, token); */
-    /*                     } */
-    /*                     if(counter == 2) { */
-    /*                         strcpy(ruleset[index].keyword2, token); */
-    /*                     } */
-    /*                     counter++; */
-    /*                     token = strtok(NULL, s); */
-    /*                 } */
-    /*             } */
-    /*         } */
-    /*     } */
-    /*  */
-    /*     #<{(| Skid's code |)}># */
-    /*     for(y = 0; y < index; ++y) { */
-    /*         removeSubstr(ruleset[y].keyword1, "ARGS|XML:#<{(| \""); */
-    /*         removeSubstr(ruleset[y].keyword1, "RGS_NAMES|"); */
-    /*         printf("%s ", ruleset[y].keyword1); */
-    /*         removeSubstr(ruleset[y].keyword2, "\" \"phase:2"); */
-    /*         printf("%s ", ruleset[y].keyword2); */
-    /*         printf("\n"); */
-    /*     } */
-    /*  */
-    /*     fclose(data); */
-    /*     return; */
-    /* } */
-    /*  */
-    /* if(p->dst_port = port) */
-    /* { */
-    /*     _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0); */
-    /*  */
-    /*     if(length > 0) { */
-    /*         _dpd.logMsg("Copying %i bytes of packet payload into buffer\n", length); */
-    /*         strncpy(tmp, (const char *) p->payload, length); */
-    /*         _dpd.logMsg("Payload data: %s\n", tmp); */
-    /*     } */
-    /* } */
+
+    int y;
+    FILE *data;
+    char line[100]; 	// output parsed string is limited
+    int counter = 0;
+    char keyword[] = ""; // no function whatsoever
+    int index = 0;
+    // int result;
+
+    struct rule {
+        char keyword1[100];
+        char keyword2[100];
+    } ruleset[10];
+
+    if((data=fopen("rule", "r")) != NULL) {
+        while(fgets(line,sizeof(line),data)) {
+            if((strcmp(line,keyword))) {
+                char s[10] = "$,";
+                char *token = strtok(line, s);
+
+                while(token != NULL) {
+                    if(counter == 1) {
+                        strcpy(ruleset[index].keyword1, token);
+                    }
+                    if(counter == 2) {
+                        strcpy(ruleset[index].keyword2, token);
+                    }
+                    counter++;
+                    token = strtok(NULL, s);
+                }
+            }
+        }
+    }
+
+    /* Skid's code */
+    for(y = 0; y < index; ++y) {
+        removeSubstr(ruleset[y].keyword1, "ARGS|XML:/* \"");
+        removeSubstr(ruleset[y].keyword1, "RGS_NAMES|");
+        printf("%s ", ruleset[y].keyword1);
+        removeSubstr(ruleset[y].keyword2, "\" \"phase:2");
+        printf("%s ", ruleset[y].keyword2);
+        printf("\n");
+    }
+
+    /* fclose(data); */
+    /* return; */
+
+    if(p->src_port == _config->webserv_port)
+    {
+        _dpd.alertAdd(GENERATOR_SPP_MODSEC, DST_PORT_MATCH, 1, 0, 3, DST_PORT_MATCH_STR, 0);
+        if(!(p))
+        {
+
+        }
+    }
+
+    fclose(data);
+    return;
 }
 
 #ifdef SNORT_RELOAD
@@ -440,12 +402,12 @@ static void ModSecReload(char *args)
     tSfPolicyId policy_id = _dpd.getParserPolicy();
 
     _dpd.logMsg("ModSec dynamic preprocessor configuration\n");
-    
+
     if(modsec_swap_config == NULL)
     {
         modsec_swap_config = sfPolicyConfigCreate();
-	if(modsec_swap_config == NULL)
-	  	ModSecFatalError("Could not allocate configuration struct", __FILE__, __LINE__);
+        if(modsec_swap_config == NULL)
+            ModSecFatalError("Could not allocate configuration struct", __FILE__, __LINE__);
     }
 
     config = ModSecParse(args);

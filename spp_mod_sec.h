@@ -39,6 +39,7 @@
 
 /*
  * Default web server port
+ * TODO: SSL_ENABLED port
  */
 #define DEFAULT_WEBSERV_PORT 80
 
@@ -51,7 +52,7 @@ extern DynamicPreprocessorData _dpd;
 typedef struct
 {
     /*
-     * Port where the targeted webserver with web interface will listen onto
+     * Port where the webserver with web interface will listen onto
      */
     unsigned webserv_port;
 
@@ -59,6 +60,11 @@ typedef struct
      * (Absolute) path to the directory containing the HTML files for the web interface
      */
     char webserv_dir[1024];
+
+    /*
+     * (Absolute) path to the directory containing Mod Security core rule set
+     */
+    char core_ruleset_dir[1024];
 
 } ModSec_config;
 
@@ -153,6 +159,7 @@ typedef struct
     unsigned int gid;
     unsigned int sid;
     unsigned int rev;
+
 } ModSec_hyperalert_key;
 
 typedef struct
@@ -174,6 +181,7 @@ typedef struct
 
     /** Make the struct 'hashable' */
     UT_hash_handle 	hh;
+
 } ModSec_hyperalert_info;
 
 /** Function pointer to the function used for getting the alert list (from log file, db, ...) */
