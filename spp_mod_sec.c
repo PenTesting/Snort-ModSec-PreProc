@@ -71,18 +71,19 @@ const char *PREPROC_NAME = "SF_MODSEC";
 
 #define DYNAMIC_PREPROC_SETUP ModSec_setup
 
-ModSec_snort_alert* (*get_alerts)(void);
-ModSec_config *config = NULL;
+/* ModSec_snort_alert* (*get_alerts)(void); */
+/* static void* (*alertparser_thread)(void*) = NULL; */
 
+/* ModSec configuration per policy */
+ModSec_config *config = NULL;
 tSfPolicyUserContextId modsec_config = NULL;
-static void* (*alertparser_thread)(void*) = NULL;
 
 #ifdef SNORT_RELOAD
 tSfPolicyUserContextId modsec_swap_config = NULL;
 #endif
 
 /* Already put in preprocids.h, still the same :( */
-#define PP_MODSEC 43
+// #define PP_MODSEC 43
 
 /*
  * Function prototype(s)
@@ -106,6 +107,7 @@ ModSecFatalError(const char *msg, const char *file, const int line)
                   ((errno != 0) ? strerror(errno) : ""));
 }
 
+/* Set up the preprocessor module */
 void ModSec_setup(void)
 {
 #ifndef SNORT_RELOAD
@@ -116,7 +118,7 @@ void ModSec_setup(void)
 #endif
     _dpd.logMsg("ModSecurity Preprocessor Initialized!\n");
 
-    DEBUG_WRAP(DebugMessage(DEBUG_PLUGIN, "Preprocessor: ModSec is setup\n"););
+    DEBUG_WRAP(_dpd.debugMsg(DEBUG_PLUGIN, "Preprocessor: ModSec is setup\n"););
 }
 
 /* Initializes the ModSec preprocessor module and registers
@@ -202,6 +204,8 @@ static ModSec_config * ModSecParse(char *args)
     }
 
     _dpd.logMsg("Web server port: %d\n", config->webserv_port);
+
+    return config;
 }
 
 #if 0

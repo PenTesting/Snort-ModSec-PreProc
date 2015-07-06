@@ -68,6 +68,36 @@ typedef struct
 
 } ModSec_config;
 
+typedef struct
+{
+    unsigned int gid;
+    unsigned int sid;
+    unsigned int rev;
+
+} ModSec_hyperalert_key;
+
+typedef struct
+{
+    /* Hyperalert key */
+    ModSec_hyperalert_key   key;
+
+    /** Pre-conditions, as array of strings */
+    char 	**preconds;
+
+    /** Number of post-conditions */
+    unsigned int 	n_preconds;
+
+    /** Post-conditions, as array of strings */
+    char 	**postconds;
+
+    /** Number of post-conditions */
+    unsigned int 	n_postconds;
+
+    /** Make the struct 'hashable' */
+    //UT_hash_handle 	hh;
+
+} ModSec_hyperalert_info;
+
 typedef struct ModSec_snort_alert
 {
     /* Identifiers of the alert */
@@ -154,47 +184,17 @@ typedef struct ModSec_snort_alert
     unsigned long int 	alert_id;
 } ModSec_snort_int;
 
-typedef struct
-{
-    unsigned int gid;
-    unsigned int sid;
-    unsigned int rev;
-
-} ModSec_hyperalert_key;
-
-typedef struct
-{
-    /* Hyperalert key */
-    ModSec_hyperalert_info;
-
-    /** Pre-conditions, as array of strings */
-    char 	**preconds;
-
-    /** Number of post-conditions */
-    unsigned int 	n_preconds;
-
-    /** Post-conditions, as array of strings */
-    char 	**postconds;
-
-    /** Number of post-conditions */
-    unsigned int 	n_postconds;
-
-    /** Make the struct 'hashable' */
-    UT_hash_handle 	hh;
-
-} ModSec_hyperalert_info;
-
 /** Function pointer to the function used for getting the alert list (from log file, db, ...) */
-extern ModSec_snort_alert* (*get_alerts)(void);
+//extern ModSec_snort_alert* (*get_alerts)(void);
 
 /** Buffer containing the alerts to be serialized on the binary history file */
-extern ModSec_snort_alert  **alerts_pool;
+//extern ModSec_snort_alert  **alerts_pool;
 
 /** Number of alerts contained in the buffer to be serialized */
 extern unsigned int 	   alerts_pool_count;
 
 /** Mutex variable for writing on the output database */
-extern pthread_mutex_t 	outdb_mutex;
+//extern pthread_mutex_t 	outdb_mutex;
 
 /** Configuration of the module */
 extern ModSec_config 	*config;
